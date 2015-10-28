@@ -32,8 +32,12 @@ DeviceEventEmitter.addListener(commonIOSNotification, (notificationData) => {
 function addObserver(notificationName, callback) {
   checkString(notificationName);
   checkCallBack(callback);
-  notificationListeners[notificationName] = notificationListeners[notificationName] ?
-                                            notificationListeners[notificationName].push(callback) : [callback];
+  var listener = notificationListeners[notificationName];
+  if (listener === undefined || typeof listener !== 'array') {
+    notificationListeners[notificationName] = [callback];
+  } else {
+    notificationListeners[notificationName] = listener.push(callback);
+  }
   NotificationCenter.addObserver(notificationName);
 };
 
@@ -45,14 +49,17 @@ function postNotification(notificationName, data) {
 function removeObserver(notificationName, callback) {
   checkString(notificationName);
   checkCallBack(callback);
-  var listenerIndex = notificationListeners[notificationName].indexOf(callback);
-  if (listenerIndex !== -1) {
-    notificationListeners[notificationName].splice(listenerIndex, 1);
-  }
+  var listener = notificationListeners[notificationName];
+  if (listener !== undefined && typeof listener === 'array') {
+    var listenerIndex = listener.indexOf(callback);
+    if (listenerIndex !== -1) {
+      listener.splice(listenerIndex, 1);
+    }
 
-  if (!notificationListeners[notificationName].length) {
-     removeAllObservers(notificationName);
-  };
+    if (!listener.length) {
+       removeAllObservers(notificationName);
+    };
+  }
 }
 
 function removeAllObservers(notificationName) {
